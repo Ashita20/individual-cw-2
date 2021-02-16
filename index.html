@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> Lessons </title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="lessons.js"></script>
+    <link href = "style.css" rel = "stylesheet" type = "text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <h1 v-text="sitename"></h1>
+            <!--Cart Button that shows the number of items added-->
+            <button class="button" v-on:click="showCart" v-show="cartItemCount">
+                {{cartItemCount}} <span class="fas fa-cart-plus"></span> Cart
+            </button>
+        </header>
+
+        <main>
+            <!--This displays the main page-->
+            <div v-if="showLesson">
+                <!--Sorting-->
+                <h2> Sort By: </h2>
+                <!--Price Sorting-->
+                <div class="sort">
+                    <input type="radio" id="aprice" value="aprice" v-model="filter.method" v-on:click="sortedAscPrice">
+                    <label for="aprice"> Price: Low to High </label>
+                    <input type="radio" id="dprice" value="dprice" v-model="filter.method" v-on:click="sortedDescPrice">
+                    <label for="dprice"> Price: High to Low </label>
+                </div>
+
+                <!--Location Sorting-->
+                <div class="sort">
+                    <input type="radio" id="alocation" value="alocation" v-model="filter.method" v-on:click="sortedAscLocation">
+                    <label for="alocation"> Location: A to Z </label>
+                    <input type="radio" id="dlocation" value="dlocation" v-model="filter.method" v-on:click="sortedDescLocation">
+                    <label for="dlocation"> Location: Z to A </label>
+                </div>
+
+                <!--Subject Sorting-->
+                <div class="sort">
+                    <input type="radio" id="asubject" value="asubject" v-model="filter.method" v-on:click="sortedAscSubject">
+                    <label for="asubject"> Subject: A to Z </label>
+                    <input type="radio" id="dsubject" value="dsubject" v-model="filter.method" v-on:click="sortedDescSubject">
+                    <label for="dsubject"> Subject: Z to A </label>
+                </div>
+
+                <!--Availability Sorting-->
+                <div class="sort">
+                    <input type="radio" id="aspaces" value="aspaces" v-model="filter.method" v-on:click="sortedAscSpaces">
+                    <label for="aspaces"> Availability: Low to High </label>
+                    <input type="radio" id="dspaces" value="dspaces" v-model="filter.method" v-on:click="sortedDescSpaces">
+                    <label for="dspaces"> Availability: High to Low </label>
+                </div>
+
+                <!--This displays the lessons-->
+                <div class="lesson" v-for="lesson in lessons">
+                    <figure>
+                        <img class="img-style" v-bind:src="lesson.image" width="100" height="100">
+                    </figure>
+                    <h2 v-text="lesson.subject"></h2>
+                    <p v-text="lesson.location"></p>
+                    <p> Price: AED {{lesson.price}} </p>
+                    <p> Available Spaces: {{lesson.availableSpaces}} </p>
+                    <!--Add to Cart button-->
+                    <button class="button2" v-on:click="addToCart(lesson)" v-if="canAddToCart(lesson)">
+                        Add to Cart
+                    </button>
+                    <!--Add to Cart gets disabled when there is no availablity-->
+                    <button class="button2" disabled="disabled" v-else>
+                        Add to Cart
+                    </button>
+                    <span v-if="lesson.availableSpaces === 0">
+                        All lessons booked!
+                    </span>
+                    <span v-else> Book Lesson! </span>
+                </div>
+            </div>
+
+            <!--This displays the Cart/Checkout Page -->
+            <div v-else>
+                <!--Go Back button-->
+                <button class="button" v-on:click="showCart"> Go Back </button>
+                <!--Cart Section-->
+                <h2> Cart </h2>
+                <!--This displays the items that have been added to the Cart-->
+                <div class="lesson" v-for="(lesson, index) in cart">
+                    <figure>
+                        <img class="img-style" v-bind:src="lesson.image" width="100" height="100">
+                    </figure>
+                    <h2 v-text="lesson.subject"></h2>
+                    <p v-text="lesson.location"></p>
+                    <p> Price: AED {{lesson.price}} </p>
+                    <!--Remove item from Cart button-->
+                    <button class="button2" v-on:click="cart.splice(index, 1)"> Remove </button>
+                </div>
+                
+                <!--Checkout section-->
+                <h2> Checkout </h2>
+                <!--Order details-->
+                <div class="checkout">
+                    <p>
+                        <strong> Name: </strong>
+                        <input v-model="order.name"/>
+                    </p>
+                    <p>
+                        <strong> Phone Number: </strong>
+                        <input v-model.number="order.phone" type="number"/>
+                    </p>
+                    <!--Checkout button-->
+                    <button class="button2" v-on:click="submitForm" v-show="orderDetails" v-if="validateDetails">
+                    Checkout
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        var school = new Vue ({
+            el: "#app",
+            data:{
+                sitename: "LessonShare",
+                showLesson: true,
+                lessons: lessons,
+                cart:[],
+                filter: {
+                    method:""
+                },
+                order: {
+                    name: null,
+                    phone: 0,
+                },
+            },
+            methods: {
+                showCart () {
+                    this.showLesson = this.showLesson ? false : true;
+                },
+
+                //adds the lesson information into cart 
+                //reduces the number of available spaces by 1
+                addToCart(lesson) {
+                    this.cart.push(lesson);
+                    lesson.availableSpaces--;
+                },
+
+                //can add lesson to cart if avaliable spaces is not 0
+                canAddToCart(lesson) {
+                    return lesson.availableSpaces > 0;
+                },
+
+                submitForm() {
+                    alert('Order Submitted!')
+                },
+
+                //Sorts lessons in ascending order of Price
+                sortedAscPrice() {
+                    function ascendingPrice(a,b) {
+                        if (a.price > b.price)
+                            return 1;
+                        if (a.price < b.price)
+                            return -1;
+                        return 0;
+                    }
+                    this.lessons.sort(ascendingPrice);
+                },
+
+                //Sorts lessons in descending order of Price
+                sortedDescPrice() {
+                    function descendingPrice(a,b) {
+                        if (a.price < b.price)
+                            return 1;
+                        if (a.price > b.price)
+                            return -1;
+                        return 0;
+                    }
+                    this.lessons.sort(descendingPrice);
+                },
+
+                //Sorts lessons in ascending order of Location
+                sortedAscLocation() {
+                    function ascendingLocation(a,b) {
+                        if (a.location > b.location)
+                            return 1;
+                        if (a.location < b.location)
+                            return -1;
+                        return 0;
+                    }
+                    this.lessons.sort(ascendingLocation);
+                },
+
+                //Sorts lessons in descending order of Location
+                sortedDescLocation() {
+                    function descendingLocation(a,b) {
+                        if (a.location < b.location)
+                            return 1;
+                        if (a.location > b.location)
+                            return -1;
+                        return 0;
+                    }
+                    this.lessons.sort(descendingLocation);
+                },
+
+                //Sorts lessons in ascending order of Subject
+                sortedAscSubject() {
+                    function ascendingSubject(a,b) {
+                        if (a.subject > b.subject)
+                            return 1;
+                        if (a.subject < b.subject)
+                            return -1;
+                        return 0;
+                    }
+                    this.lessons.sort(ascendingSubject);
+                },
+
+                //Sorts lessons in descending order of Subject
+                sortedDescSubject() {
+                    function descendingSubject(a,b) {
+                        if (a.subject < b.subject)
+                            return 1;
+                        if (a.subject > b.subject)
+                            return -1;
+                        return 0;
+                    }
+                    this.lessons.sort(descendingSubject);
+                },
+
+                //Sorts lessons in ascending order of Availability 
+                sortedAscSpaces() {
+                    function ascendingSpaces(a,b) {
+                        if (a.availableSpaces > b.availableSpaces)
+                            return 1;
+                        if (a.availableSpaces < b.availableSpaces)
+                            return -1;
+                        return 0;
+                    }
+                    this.lessons.sort(ascendingSpaces);
+                },
+
+                //Sorts lessons in descending order of Availability
+                sortedDescSpaces() {
+                    function descendingSpaces(a,b) {
+                        if (a.availableSpaces < b.availableSpaces)
+                            return 1;
+                        if (a.availableSpaces > b.availableSpaces)
+                            return -1;
+                        return 0;
+                    }
+                    this.lessons.sort(descendingSpaces);
+                }
+            },
+            computed: {
+                //Calculates number of items in Cart
+                cartItemCount: function () {
+                    return this.cart.length;
+                },
+
+                //Checks if both the name and phone fields have been filled 
+                orderDetails: function () {
+                    return this.order.name && this.order.phone;
+                },
+
+                //Validates that name is only letters and phone is only numbers
+                validateDetails: function () {
+                    let alphabets = /^[A-Za-z]+$/;
+                    let num_range = /^[0-9]+$/;
+                    return alphabets.test(this.order.name) && num_range.test(this.order.phone);
+                }
+            },
+        });
+    </script>
+</body>
+</html>
