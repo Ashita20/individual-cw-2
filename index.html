@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title> Lessons </title>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <script src="lessons.js"></script>
+    <!--<script src="lessons.js"></script>-->
     <link href = "style.css" rel = "stylesheet" type = "text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
 </head>
@@ -125,7 +125,7 @@
             data:{
                 sitename: "LessonShare",
                 showLesson: true,
-                lessons: lessons,
+                lessons: [],
                 cart:[],
                 filter: {
                     method:""
@@ -136,6 +136,14 @@
                 },
             },
             methods: {
+                //retrieve lessons using fetch
+                getLessons() {
+                    fetch('http://localhost:3000/collection/lessons')
+                        .then(response => response.json())
+                        .then(json => school.lessons = json)
+                        .catch(err => console.log(err));
+                },
+
                 showCart () {
                     this.showLesson = this.showLesson ? false : true;
                 },
@@ -270,6 +278,9 @@
                     return alphabets.test(this.order.name) && num_range.test(this.order.phone);
                 }
             },
+            mounted() {
+                this.getLessons();
+            }
         });
     </script>
 </body>
