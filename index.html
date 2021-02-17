@@ -65,6 +65,7 @@
                     <p v-text="lesson.location"></p>
                     <p> Price: AED {{lesson.price}} </p>
                     <p> Available Spaces: {{lesson.availableSpaces}} </p>
+                    <!--<p> Available Spaces: {{getAvailabilty(lesson)}} </p>-->
                     <!--Add to Cart button-->
                     <button class="button2" v-on:click="addToCart(lesson)" v-if="canAddToCart(lesson)">
                         Add to Cart
@@ -138,7 +139,7 @@
             methods: {
                 //retrieve lessons using fetch
                 getLessons() {
-                    fetch('http://localhost:3000/collection/lessons')
+                    fetch('https://lesson-share.herokuapp.com/collection/lessons')
                         .then(response => response.json())
                         .then(json => school.lessons = json)
                         .catch(err => console.log(err));
@@ -151,18 +152,81 @@
                 //adds the lesson information into cart 
                 //reduces the number of available spaces by 1
                 addToCart(lesson) {
+                    /*if(this.getAvailabilty(lesson) > 0) {
+                        let exists = false;
+                        this.cart.forEach(item => {
+                            if(item.lesson == lesson) {
+                            exists = true;
+                            item.quantity++;
+                        }
+                    });
+                    if(!exists) {
+                        this.cart.push({
+                            lesson: lesson,
+                            quantity: 1
+                        });
+                    }
+                }
+            },*/
                     this.cart.push(lesson);
                     lesson.availableSpaces--;
-                },
-
+},
                 //can add lesson to cart if avaliable spaces is not 0
                 canAddToCart(lesson) {
                     return lesson.availableSpaces > 0;
                 },
-
-                submitForm() {
-                    alert('Order Submitted!')
+                /*countInCart(lesson) {
+                    let count = 0;
+                    this.cart.forEach(item => {
+                        if(item.lesson === lesson) {
+                            count = item.quantity;
+                        }
+                    });
+                    return count;
                 },
+                getAvailabilty(lesson) {
+                    return lesson.availableSpaces - this.countInCart(lesson);
+                },*/
+
+
+                newOrder(body) {
+                    fetch('https://lesson-share.herokuapp.com/collection/orders', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(body)
+                    }).then(response => response.json())
+                    .then(data => { return data}).catch(err => { return data});
+                },
+                updateAvailableSpaces(id, quantity) {
+                    fetch('https://lesson-share.herokuapp.com/collection/lessons/602c1a18cd802b3cbce85de5', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json'},
+                        body: JSON.stringify(
+                            {
+                                "availableSpaces": quantity
+                            } 
+                        )
+                    }).then(response => response.json())
+                    .then(data => { return data}).catch(err => { return data});
+                },
+                submitForm() {
+                    this.cart.forEach(item => {
+                        let body = {
+                            "lessonID": item.id,
+                            "subject": item.subject,
+                            "name": this.order.name,
+                            "phone": this.order.phone,
+                            "spaces": 5 - item.availableSpaces
+                        };
+                    this.newOrder(body);
+                    this.updateAvailableSpaces(item._id, item.availableSpaces);
+                }),
+                alert("Thanks for ordering!");
+                //this.getLessons();
+                this.cart = [];
+            },
 
                 //Sorts lessons in ascending order of Price
                 sortedAscPrice() {
@@ -260,6 +324,7 @@
                     this.lessons.sort(descendingSpaces);
                 }
             },
+
             computed: {
                 //Calculates number of items in Cart
                 cartItemCount: function () {
