@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title> Lessons </title>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <!--<script src="lessons.js"></script>-->
     <link href = "style.css" rel = "stylesheet" type = "text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
 </head>
@@ -152,43 +151,16 @@
                 //adds the lesson information into cart 
                 //reduces the number of available spaces by 1
                 addToCart(lesson) {
-                    /*if(this.getAvailabilty(lesson) > 0) {
-                        let exists = false;
-                        this.cart.forEach(item => {
-                            if(item.lesson == lesson) {
-                            exists = true;
-                            item.quantity++;
-                        }
-                    });
-                    if(!exists) {
-                        this.cart.push({
-                            lesson: lesson,
-                            quantity: 1
-                        });
-                    }
-                }
-            },*/
                     this.cart.push(lesson);
                     lesson.availableSpaces--;
-},
+                },
+
                 //can add lesson to cart if avaliable spaces is not 0
                 canAddToCart(lesson) {
                     return lesson.availableSpaces > 0;
                 },
-                /*countInCart(lesson) {
-                    let count = 0;
-                    this.cart.forEach(item => {
-                        if(item.lesson === lesson) {
-                            count = item.quantity;
-                        }
-                    });
-                    return count;
-                },
-                getAvailabilty(lesson) {
-                    return lesson.availableSpaces - this.countInCart(lesson);
-                },*/
 
-
+                //adds a new order to the orders collection in the database
                 newOrder(body) {
                     fetch('https://lesson-share.herokuapp.com/collection/orders', {
                         method: 'POST',
@@ -199,8 +171,10 @@
                     }).then(response => response.json())
                     .then(data => { return data}).catch(err => { return data});
                 },
+
+                //updates the available spaces in the lessons collection in the database 
                 updateAvailableSpaces(id, quantity) {
-                    fetch('https://lesson-share.herokuapp.com/collection/lessons/602c1a18cd802b3cbce85de5', {
+                    fetch('https://lesson-share.herokuapp.com/collection/lessons/' + id, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json'},
                         body: JSON.stringify(
@@ -211,6 +185,8 @@
                     }).then(response => response.json())
                     .then(data => { return data}).catch(err => { return data});
                 },
+
+                //checkout form which sends the order information to the database and updates the spaces
                 submitForm() {
                     this.cart.forEach(item => {
                         let body = {
@@ -224,9 +200,8 @@
                     this.updateAvailableSpaces(item._id, item.availableSpaces);
                 }),
                 alert("Thanks for ordering!");
-                //this.getLessons();
                 this.cart = [];
-            },
+                },
 
                 //Sorts lessons in ascending order of Price
                 sortedAscPrice() {
@@ -343,6 +318,8 @@
                     return alphabets.test(this.order.name) && num_range.test(this.order.phone);
                 }
             },
+
+            //displays as the page loads
             mounted() {
                 this.getLessons();
             }
